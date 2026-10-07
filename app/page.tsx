@@ -117,8 +117,8 @@ export default function Home() {
   };
 
   return (
-    <main className="min-h-screen bg-[#f7f8fa] px-4 py-6 sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-6xl">
+    <main className="min-h-screen overflow-x-hidden bg-[#f7f8fa] px-4 py-6 sm:px-6 lg:px-8">
+      <div className="mx-auto w-full max-w-6xl">
 
         {/* Navigation */}
         <nav className="mb-10 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -198,7 +198,7 @@ export default function Home() {
                     type="date"
                     value={date}
                     onChange={(e) => setDate(e.target.value)}
-                    className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 outline-none transition focus:border-gray-400 focus:bg-white"
+                    className="block w-full min-w-0 max-w-full appearance-none rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 outline-none transition focus:border-gray-400 focus:bg-white"
                     required
                   />
                 </div>
