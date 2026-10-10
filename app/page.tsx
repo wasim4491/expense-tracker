@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import LogoutButton from "@/app/components/LogoutButton";
 
 export default function Home() {
   const [date, setDate] = useState(() => {
@@ -150,6 +151,7 @@ export default function Home() {
             >
               Dashboard
             </a>
+            <LogoutButton />
           </div>
         </nav>
 

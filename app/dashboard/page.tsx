@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import LogoutButton from "@/app/components/LogoutButton";
 
 type Expense = {
   ID: string;
@@ -20,6 +21,11 @@ export default function Dashboard() {
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
+  const [monthlyBudget, setMonthlyBudget] = useState(2500);
+  const [isEditingBudget, setIsEditingBudget] = useState(false);
+  const [budgetInput, setBudgetInput] = useState("2500");
+  const [isSavingBudget, setIsSavingBudget] = useState(false);
+  const [budgetMessage, setBudgetMessage] = useState("");
 
   const [selectedMonth, setSelectedMonth] = useState(() => {
     const now = new Date();
@@ -49,7 +55,72 @@ export default function Dashboard() {
     };
 
     fetchExpenses();
+
+    const fetchBudget = async () => {
+      try {
+        const response = await fetch(
+          "/api/expenses?action=getBudget",
+          { cache: "no-store" }
+        );
+    
+        if (!response.ok) {
+          throw new Error("Failed to fetch budget");
+        }
+    
+        const data = await response.json();
+    
+        if (typeof data.budget === "number" && data.budget >= 0) {
+          setMonthlyBudget(data.budget);
+        }
+      } catch (error) {
+        console.error("Failed to fetch budget:", error);
+      }
+    };
+    
+    fetchBudget();
   }, []);
+
+
+  const handleSaveBudget = async () => {
+    const newBudget = Number(budgetInput);
+
+    if (!budgetInput.trim() || !Number.isFinite(newBudget) || newBudget < 0) {
+      setBudgetMessage("Enter a valid budget amount.");
+      return;
+    }
+
+    setIsSavingBudget(true);
+    setBudgetMessage("");
+
+    try {
+      const response = await fetch("/api/expenses", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          action: "updateBudget",
+          budget: newBudget,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || "Failed to update budget.");
+      }
+
+      setMonthlyBudget(newBudget);
+      setIsEditingBudget(false);
+      setBudgetMessage("Monthly budget updated successfully.");
+    } catch (error) {
+      console.error("Failed to update budget:", error);
+      setBudgetMessage("Could not save budget. Please try again.");
+    } finally {
+      setIsSavingBudget(false);
+    }
+  };
+
 
   const monthlyExpenses = useMemo(() => {
     return expenses.filter((expense) =>
@@ -69,6 +140,15 @@ export default function Dashboard() {
     (total, expense) => total + getShare(expense),
     0
   );
+
+  const budgetRemaining = monthlyBudget - myShare;
+
+  const budgetUsedPercentage =
+    monthlyBudget > 0
+      ? (myShare / monthlyBudget) * 100
+      : 0;
+
+  const budgetProgress = Math.min(budgetUsedPercentage, 100);
 
   const needs = monthlyExpenses
     .filter((expense) => expense.Type === "Need")
@@ -220,6 +300,7 @@ export default function Dashboard() {
             >
               Dashboard
             </a>
+            <LogoutButton />
           </div>
         </nav>
 
@@ -336,6 +417,144 @@ export default function Dashboard() {
             </p>
           </div>
         </div>
+
+
+        {/* Monthly Budget */}
+        <div className="mt-6 rounded-2xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-500">
+                Monthly Budget
+              </p>
+              
+              {isEditingBudget ? (
+                <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center">
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg font-medium text-gray-500">$</span>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={budgetInput}
+                      onChange={(e) => setBudgetInput(e.target.value)}
+                      className="w-full max-w-48 rounded-lg border border-gray-300 px-3 py-2 text-xl font-semibold text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                      aria-label="Monthly budget amount"
+                    />
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleSaveBudget}
+                    disabled={isSavingBudget}
+                    className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700 disabled:opacity-50"
+                  >
+                    {isSavingBudget ? "Saving..." : "Save"}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsEditingBudget(false);
+                      setBudgetInput(String(monthlyBudget));
+                      setBudgetMessage("");
+                    }}
+                    disabled={isSavingBudget}
+                    className="rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              ) : (
+                <div className="mt-2 flex flex-wrap items-center gap-3">
+                  <h2 className="text-3xl font-bold tracking-tight text-gray-950">
+                    {formatMoney(monthlyBudget)}
+                  </h2>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setBudgetInput(String(monthlyBudget));
+                      setBudgetMessage("");
+                      setIsEditingBudget(true);
+                    }}
+                    className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                  >
+                    Edit budget
+                  </button>
+                </div>
+              )}
+              <p className="mt-1 text-sm text-gray-500">
+                Based on your share of expenses for {formatMonth(selectedMonth)}
+              </p>
+            </div>
+
+            <div className="rounded-xl bg-gray-50 px-4 py-3 sm:text-right">
+              <p className="text-xs font-medium text-gray-500">
+                {budgetRemaining >= 0 ? "Remaining" : "Over budget"}
+              </p>
+              <p
+                className={`mt-1 text-xl font-bold ${
+                  budgetRemaining >= 0 ? "text-green-700" : "text-red-600"
+                }`}
+              >
+                {formatMoney(Math.abs(budgetRemaining))}
+              </p>
+            </div>
+          </div>
+
+          {budgetMessage && (
+            <p
+              role="status"
+              className={`mt-3 text-sm ${
+                budgetMessage.includes("successfully")
+                  ? "text-green-700"
+                  : "text-red-600"
+              }`}
+            >
+              {budgetMessage}
+            </p>
+          )}
+
+          <div className="mt-6">
+            <div className="mb-2 flex items-center justify-between gap-3 text-sm">
+              <span className="text-gray-600">
+                {formatMoney(myShare)} spent
+              </span>
+              <span className="font-semibold text-gray-900">
+                {budgetUsedPercentage.toFixed(1)}% used
+              </span>
+            </div>
+
+            <div
+              className="h-3 overflow-hidden rounded-full bg-gray-100"
+              role="progressbar"
+              aria-label="Monthly budget used"
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-valuenow={Math.min(budgetUsedPercentage, 100)}
+            >
+              <div
+                className={`h-full rounded-full transition-all ${
+                  budgetUsedPercentage >= 100
+                    ? "bg-red-500"
+                    : budgetUsedPercentage >= 80
+                    ? "bg-amber-500"
+                    : "bg-green-600"
+                }`}
+                style={{ width: `${budgetProgress}%` }}
+              />
+            </div>
+
+            <p className="mt-3 text-xs text-gray-400">
+              {budgetUsedPercentage >= 100
+                ? "You've reached or exceeded your monthly budget."
+                : budgetUsedPercentage >= 80
+                ? "You're approaching your monthly budget."
+                : "You're within your monthly budget."}
+            </p>
+          </div>
+        </div>
+
 
         {/* Monthly Overview */}
         <div className="mt-6 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">

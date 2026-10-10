@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import LogoutButton from "@/app/components/LogoutButton";
 
 type Expense = {
   ID: string;
@@ -25,6 +26,29 @@ export default function ExpensesPage() {
   const [categoryFilter, setCategoryFilter] = useState("All");
   const [typeFilter, setTypeFilter] = useState("All");
 
+  const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
+  const [editDescription, setEditDescription] = useState("");
+  const [editAmount, setEditAmount] = useState("");
+  const [isSavingEdit, setIsSavingEdit] = useState(false);
+
+  const [deletingExpense, setDeletingExpense] = useState<Expense | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const [notification, setNotification] = useState<{
+    message: string;
+    type: "success" | "error";
+  } | null>(null);
+
+  useEffect(() => {
+    if (!notification || notification.type === "error") return;
+  
+    const timeout = setTimeout(() => {
+      setNotification(null);
+    }, 3000);
+  
+    return () => clearTimeout(timeout);
+  }, [notification]);
+
   useEffect(() => {
     const fetchExpenses = async () => {
       try {
@@ -48,13 +72,11 @@ export default function ExpensesPage() {
     fetchExpenses();
   }, []);
 
-  const handleDelete = async (id: string) => {
-    const confirmed = window.confirm(
-      "Are you sure you want to delete this expense?"
-    );
-
-    if (!confirmed) return;
-
+  const handleDelete = async () => {
+    if (!deletingExpense) return;
+  
+    setIsDeleting(true);
+  
     try {
       const response = await fetch("/api/expenses", {
         method: "POST",
@@ -63,47 +85,61 @@ export default function ExpensesPage() {
         },
         body: JSON.stringify({
           action: "delete",
-          id: id,
+          id: deletingExpense.ID,
         }),
       });
-
+  
       const result = await response.json();
-
+  
       if (!response.ok || !result.success) {
         throw new Error(result.error || "Failed to delete expense");
       }
-
+  
       setExpenses((currentExpenses) =>
-        currentExpenses.filter((expense) => expense.ID !== id)
+        currentExpenses.filter(
+          (expense) => expense.ID !== deletingExpense.ID
+        )
       );
+  
+      setDeletingExpense(null);
+      setNotification({
+        message: "Expense deleted successfully.",
+        type: "success",
+      });
     } catch (error) {
       console.error("Failed to delete expense:", error);
-      alert("Failed to delete expense. Please try again.");
+      setNotification({
+        message: "Failed to delete expense. Please try again.",
+        type: "error",
+      });
+    } finally {
+      setIsDeleting(false);
     }
   };
 
-  const handleEdit = async (expense: Expense) => {
-    const description = window.prompt(
-      "Description:",
-      expense.Description
-    );
-
-    if (description === null) return;
-
-    const amountInput = window.prompt(
-      "Amount:",
-      String(expense.Amount)
-    );
-
-    if (amountInput === null) return;
-
-    const amount = Number(amountInput);
-
+  const openEditModal = (expense: Expense) => {
+    setEditingExpense(expense);
+    setEditDescription(expense.Description);
+    setEditAmount(String(expense.Amount));
+  };
+  
+  const handleEdit = async () => {
+    if (!editingExpense) return;
+  
+    const amount = Number(editAmount);
+  
+    if (!editDescription.trim()) {
+      alert("Please enter a description.");
+      return;
+    }
+  
     if (isNaN(amount) || amount <= 0) {
       alert("Please enter a valid amount.");
       return;
     }
-
+  
+    setIsSavingEdit(true);
+  
     try {
       const response = await fetch("/api/expenses", {
         method: "POST",
@@ -112,49 +148,58 @@ export default function ExpensesPage() {
         },
         body: JSON.stringify({
           action: "update",
-          id: expense.ID,
-          date: expense.Date.substring(0, 10),
-          amount: amount,
-          description: description,
-          category: expense.Category,
-          type: expense.Type,
-          paymentMethod: expense["Payment Method"],
-          notes: expense.Notes,
-          split: expense.Split,
-          people: expense.People,
+          id: editingExpense.ID,
+          date: editingExpense.Date.substring(0, 10),
+          amount,
+          description: editDescription.trim(),
+          category: editingExpense.Category,
+          type: editingExpense.Type,
+          paymentMethod: editingExpense["Payment Method"],
+          notes: editingExpense.Notes,
+          split: editingExpense.Split,
+          people: editingExpense.People,
           myShare:
-            expense.Split === "Yes" && expense.People
-              ? amount / Number(expense.People)
+            editingExpense.Split === "Yes" && editingExpense.People
+              ? amount / Number(editingExpense.People)
               : amount,
         }),
       });
-
+  
       const result = await response.json();
-
+  
       if (!response.ok || !result.success) {
         throw new Error(result.error || "Failed to update expense");
       }
-
+  
       setExpenses((currentExpenses) =>
         currentExpenses.map((item) =>
-          item.ID === expense.ID
+          item.ID === editingExpense.ID
             ? {
                 ...item,
-                Description: description,
+                Description: editDescription.trim(),
                 Amount: amount,
                 "My Share":
-                  expense.Split === "Yes" && expense.People
-                    ? amount / Number(expense.People)
+                  editingExpense.Split === "Yes" && editingExpense.People
+                    ? amount / Number(editingExpense.People)
                     : amount,
               }
             : item
         )
       );
-
-      alert("Expense updated successfully.");
+  
+      setEditingExpense(null);
+      setNotification({
+        message: "Expense updated successfully.",
+        type: "success",
+      });
     } catch (error) {
       console.error("Failed to update expense:", error);
-      alert("Failed to update expense. Please try again.");
+      setNotification({
+        message: "Failed to update expense. Please try again.",
+        type: "error",
+      });
+    } finally {
+      setIsSavingEdit(false);
     }
   };
 
@@ -182,6 +227,29 @@ export default function ExpensesPage() {
 
   return (
     <main className="min-h-screen bg-[#f7f8fa] px-4 py-6 sm:px-6 lg:px-8">
+      {notification && (
+        <div
+          role="status"
+          aria-live="polite"
+          className={`fixed right-4 top-4 z-[100] flex w-[calc(100%-2rem)] max-w-sm items-center justify-between gap-3 rounded-xl border px-4 py-3 text-sm font-medium shadow-lg sm:right-6 sm:top-6 ${
+            notification.type === "success"
+              ? "border-green-200 bg-green-50 text-green-800"
+              : "border-red-200 bg-red-50 text-red-800"
+          }`}
+        >
+          <span>{notification.message}</span>
+
+          <button
+            type="button"
+            onClick={() => setNotification(null)}
+            aria-label="Dismiss notification"
+            className="shrink-0 rounded-lg px-2 py-1 text-base hover:bg-black/5"
+          >
+            ×
+          </button>
+        </div>
+      )}
+
       <div className="mx-auto max-w-6xl">
 
         {/* Navigation */}
@@ -214,6 +282,7 @@ export default function ExpensesPage() {
             >
               Dashboard
             </a>
+            <LogoutButton />
           </div>
         </nav>
 
@@ -547,7 +616,7 @@ export default function ExpensesPage() {
                         <div className="flex justify-end gap-2">
                           <button
                             type="button"
-                            onClick={() => handleEdit(expense)}
+                            onClick={() => openEditModal(expense)}
                             className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-700 transition hover:bg-gray-50"
                           >
                             Edit
@@ -556,7 +625,7 @@ export default function ExpensesPage() {
                           <button
                             type="button"
                             onClick={() =>
-                              handleDelete(expense.ID)
+                              setDeletingExpense(expense)
                             }
                             className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-500 transition hover:border-red-200 hover:bg-red-50 hover:text-red-600"
                           >
@@ -594,6 +663,163 @@ export default function ExpensesPage() {
           </div>
         )}
       </div>
+      {editingExpense && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-0 sm:items-center sm:p-4">
+            <div className="w-full max-w-lg rounded-t-3xl bg-white p-6 shadow-xl sm:rounded-2xl">
+            <div className="flex items-center justify-between">
+                <div>
+                <h2 className="text-xl font-bold text-gray-950">
+                    Edit Expense
+                </h2>
+                <p className="mt-1 text-sm text-gray-500">
+                    Update the description or amount.
+                </p>
+                </div>
+
+                <button
+                type="button"
+                onClick={() => setEditingExpense(null)}
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200"
+                >
+                ×
+                </button>
+            </div>
+
+            <div className="mt-6 space-y-5">
+                <div>
+                <label className="mb-2 block text-sm font-medium text-gray-700">
+                    Description
+                </label>
+                <input
+                    type="text"
+                    value={editDescription}
+                    onChange={(e) => setEditDescription(e.target.value)}
+                    className="block w-full min-w-0 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 outline-none focus:border-gray-400 focus:bg-white"
+                />
+                </div>
+
+                <div>
+                <label className="mb-2 block text-sm font-medium text-gray-700">
+                    Amount
+                </label>
+
+                <div className="relative">
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm text-gray-500">
+                    $
+                    </span>
+
+                    <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={editAmount}
+                    onChange={(e) => setEditAmount(e.target.value)}
+                    className="block w-full min-w-0 rounded-xl border border-gray-200 bg-gray-50 py-3 pl-8 pr-4 text-sm text-gray-900 outline-none focus:border-gray-400 focus:bg-white"
+                    />
+                </div>
+                </div>
+
+                <div className="rounded-xl bg-gray-50 p-4 text-sm text-gray-500">
+                <div className="flex justify-between">
+                    <span>Category</span>
+                    <span className="font-medium text-gray-900">
+                    {editingExpense.Category}
+                    </span>
+                </div>
+
+                <div className="mt-2 flex justify-between">
+                    <span>Type</span>
+                    <span className="font-medium text-gray-900">
+                    {editingExpense.Type}
+                    </span>
+                </div>
+
+                <div className="mt-2 flex justify-between">
+                    <span>Payment</span>
+                    <span className="font-medium text-gray-900">
+                    {editingExpense["Payment Method"]}
+                    </span>
+                </div>
+                </div>
+            </div>
+
+            <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+                <button
+                type="button"
+                onClick={() => setEditingExpense(null)}
+                disabled={isSavingEdit}
+                className="w-full rounded-xl border border-gray-200 px-5 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50 sm:w-auto"
+                >
+                Cancel
+                </button>
+
+                <button
+                type="button"
+                onClick={handleEdit}
+                disabled={isSavingEdit}
+                className="w-full rounded-xl bg-gray-950 px-5 py-3 text-sm font-semibold text-white hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+                >
+                {isSavingEdit ? "Saving..." : "Save Changes"}
+                </button>
+            </div>
+            </div>
+        </div>
+        )}
+      
+      {deletingExpense && (
+        <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/40 p-0 sm:items-center sm:p-4">
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="delete-expense-title"
+            className="w-full max-w-md rounded-t-3xl bg-white p-6 shadow-xl sm:rounded-2xl"
+          >
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-red-50 text-red-600">
+              !
+            </div>
+
+            <h2
+              id="delete-expense-title"
+              className="mt-4 text-xl font-bold text-gray-950"
+            >
+              Delete Expense?
+            </h2>
+
+            <p className="mt-2 text-sm leading-6 text-gray-500">
+              Are you sure you want to delete{" "}
+              <span className="font-semibold text-gray-900">
+                {deletingExpense.Description}
+              </span>{" "}
+              for{" "}
+              <span className="font-semibold text-gray-900">
+                {formatMoney(Number(deletingExpense.Amount))}
+              </span>
+              ? This action cannot be undone.
+            </p>
+
+            <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+              <button
+                type="button"
+                onClick={() => setDeletingExpense(null)}
+                disabled={isDeleting}
+                className="w-full rounded-xl border border-gray-200 px-5 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-60 sm:w-auto"
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                onClick={handleDelete}
+                disabled={isDeleting}
+                className="w-full rounded-xl bg-red-600 px-5 py-3 text-sm font-semibold text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+              >
+                {isDeleting ? "Deleting..." : "Delete Expense"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </main>
   );
 }
