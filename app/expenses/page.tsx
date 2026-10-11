@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import LogoutButton from "@/app/components/LogoutButton";
+import AppNavigation from "@/app/components/AppNavigation";
 
 type Expense = {
   ID: string;
@@ -48,6 +48,19 @@ export default function ExpensesPage() {
   
     return () => clearTimeout(timeout);
   }, [notification]);
+
+  useEffect(() => {
+    const initialSearch = new URLSearchParams(window.location.search).get("search");
+    if (initialSearch) setSearch(initialSearch);
+  }, []);
+
+  useEffect(() => {
+    const handleGlobalSearch = (event: Event) => {
+      setSearch((event as CustomEvent<string>).detail || "");
+    };
+    window.addEventListener("expense-search", handleGlobalSearch);
+    return () => window.removeEventListener("expense-search", handleGlobalSearch);
+  }, []);
 
   useEffect(() => {
     const fetchExpenses = async () => {
@@ -210,7 +223,8 @@ export default function ExpensesPage() {
       expense.Description?.toLowerCase().includes(searchText) ||
       expense.Category?.toLowerCase().includes(searchText) ||
       expense.Type?.toLowerCase().includes(searchText) ||
-      expense["Payment Method"]?.toLowerCase().includes(searchText);
+      expense["Payment Method"]?.toLowerCase().includes(searchText) ||
+      expense.Notes?.toLowerCase().includes(searchText);
 
     const matchesCategory =
       categoryFilter === "All" ||
@@ -226,16 +240,49 @@ export default function ExpensesPage() {
   const formatMoney = (value: number) => `$${value.toFixed(2)}`;
 
   return (
-    <main className="min-h-screen bg-[#f7f8fa] px-4 py-6 sm:px-6 lg:px-8">
-      {notification && (
+    <main className="app-content-with-sidebar min-h-screen bg-slate-50 px-4 pb-8 pt-24 sm:px-6 lg:pr-8">
+      {notification?.type === "success" && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/30 px-4 backdrop-blur-sm"
+          role="status"
+          aria-live="polite"
+        >
+          <div className="expense-success-card w-full max-w-sm rounded-3xl bg-white px-8 py-9 text-center shadow-2xl">
+            <div className="expense-success-check mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-green-600 text-white shadow-lg shadow-green-600/25">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                className="h-10 w-10"
+                aria-hidden="true"
+              >
+                <path
+                  d="M5 12.5l4.2 4.2L19 7"
+                  stroke="currentColor"
+                  strokeWidth="2.8"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </div>
+
+            <h2 className="mt-6 text-2xl font-bold tracking-tight text-gray-950">
+              {notification.message.includes("updated")
+                ? "Expense updated!"
+                : "Expense deleted!"}
+            </h2>
+
+            <p className="mt-2 text-sm text-gray-500">
+              {notification.message}
+            </p>
+          </div>
+        </div>
+      )}
+
+      {notification?.type === "error" && (
         <div
           role="status"
           aria-live="polite"
-          className={`fixed right-4 top-4 z-[100] flex w-[calc(100%-2rem)] max-w-sm items-center justify-between gap-3 rounded-xl border px-4 py-3 text-sm font-medium shadow-lg sm:right-6 sm:top-6 ${
-            notification.type === "success"
-              ? "border-green-200 bg-green-50 text-green-800"
-              : "border-red-200 bg-red-50 text-red-800"
-          }`}
+          className="fixed right-4 top-4 z-[100] flex w-[calc(100%-2rem)] max-w-sm items-center justify-between gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-800 shadow-lg sm:right-6 sm:top-6"
         >
           <span>{notification.message}</span>
 
@@ -252,39 +299,7 @@ export default function ExpensesPage() {
 
       <div className="mx-auto max-w-6xl">
 
-        {/* Navigation */}
-        <nav className="mb-10 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <a
-            href="/"
-            className="text-xl font-bold tracking-tight text-gray-950"
-          >
-            Expense Tracker
-          </a>
-
-          <div className="flex flex-wrap gap-2">
-            <a
-              href="/"
-              className="rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
-            >
-              Add Expense
-            </a>
-
-            <a
-              href="/expenses"
-              className="rounded-xl bg-gray-950 px-4 py-2 text-sm font-medium text-white"
-            >
-              Expenses
-            </a>
-
-            <a
-              href="/dashboard"
-              className="rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
-            >
-              Dashboard
-            </a>
-            <LogoutButton />
-          </div>
-        </nav>
+        <AppNavigation />
 
         {/* Page Header */}
         <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
@@ -294,7 +309,7 @@ export default function ExpensesPage() {
             </p>
 
             <h1 className="text-3xl font-bold tracking-tight text-gray-950 sm:text-4xl">
-              Expenses
+              All Expenses
             </h1>
 
             <p className="mt-2 text-sm text-gray-500">

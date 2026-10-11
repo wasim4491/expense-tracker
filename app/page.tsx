@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import LogoutButton from "@/app/components/LogoutButton";
+import AppNavigation from "@/app/components/AppNavigation";
 
 export default function Home() {
   const [date, setDate] = useState(() => {
@@ -25,6 +25,8 @@ export default function Home() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [expenses, setExpenses] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [successMessage, setSuccessMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
 
   const myShare =
     split === "Yes" && Number(people) > 0
@@ -53,8 +55,22 @@ export default function Home() {
     fetchExpenses();
   }, []);
 
+
+  useEffect(() => {
+    if (!successMessage) return;
+
+    const timeout = window.setTimeout(() => {
+      setSuccessMessage("");
+    }, 1600);
+
+    return () => window.clearTimeout(timeout);
+  }, [successMessage]);
+
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setSuccessMessage("");
+    setErrorMessage("");
 
     setIsSubmitting(true);
 
@@ -84,7 +100,7 @@ export default function Home() {
         throw new Error(result.error || "Failed to add expense");
       }
 
-      alert("Expense added!");
+      setSuccessMessage("Expense added successfully!");
 
       const today = new Date();
 
@@ -111,49 +127,53 @@ export default function Home() {
       }
     } catch (error) {
       console.error(error);
-      alert("Failed to add expense");
+      setErrorMessage("Failed to add expense. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <main className="min-h-screen overflow-x-hidden bg-[#f7f8fa] px-4 py-6 sm:px-6 lg:px-8">
+    <main className="app-content-with-sidebar min-h-screen overflow-x-hidden bg-slate-50 px-4 pb-8 pt-24 sm:px-6 lg:pr-8">
+
+      {successMessage && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 px-4 backdrop-blur-sm"
+          role="status"
+          aria-live="polite"
+        >
+          <div className="expense-success-card w-full max-w-sm rounded-3xl bg-white px-8 py-9 text-center shadow-2xl">
+            <div className="expense-success-check mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-green-600 text-white shadow-lg shadow-green-600/25">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                className="h-10 w-10"
+                aria-hidden="true"
+              >
+                <path
+                  d="M5 12.5l4.2 4.2L19 7"
+                  stroke="currentColor"
+                  strokeWidth="2.8"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </div>
+
+            <h2 className="mt-6 text-2xl font-bold tracking-tight text-gray-950">
+              Expense added!
+            </h2>
+
+            <p className="mt-2 text-sm text-gray-500">
+              Your expense has been saved successfully.
+            </p>
+          </div>
+        </div>
+      )}
+
       <div className="mx-auto w-full max-w-6xl">
 
-        {/* Navigation */}
-        <nav className="mb-10 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <a
-            href="/"
-            className="text-xl font-bold tracking-tight text-gray-950"
-          >
-            Expense Tracker
-          </a>
-
-          <div className="flex flex-wrap gap-2">
-            <a
-              href="/"
-              className="rounded-xl bg-gray-950 px-4 py-2 text-sm font-medium text-white"
-            >
-              Add Expense
-            </a>
-
-            <a
-              href="/expenses"
-              className="rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
-            >
-              Expenses
-            </a>
-
-            <a
-              href="/dashboard"
-              className="rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
-            >
-              Dashboard
-            </a>
-            <LogoutButton />
-          </div>
-        </nav>
+        <AppNavigation />
 
         {/* Page Header */}
         <div className="mb-8">
@@ -184,6 +204,7 @@ export default function Home() {
                 Enter the details of your transaction.
               </p>
             </div>
+
 
             <form onSubmit={handleSubmit} className="space-y-6">
 
@@ -217,6 +238,7 @@ export default function Home() {
                     </span>
 
                     <input
+                      id="expense-amount"
                       type="number"
                       step="0.01"
                       min="0"
@@ -424,101 +446,44 @@ export default function Home() {
           {/* Right Side */}
           <div className="space-y-6">
 
-            {/* Current Expense Preview */}
-            <div className="rounded-2xl border border-gray-200 bg-gray-950 p-6 text-white shadow-sm">
-              <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
-                Expense preview
-              </p>
-
-              <p className="mt-5 truncate text-lg font-semibold">
-                {description || "Your expense"}
-              </p>
-
-              <p className="mt-2 text-4xl font-bold tracking-tight">
-                ${Number(amount || 0).toFixed(2)}
-              </p>
-
-              <div className="mt-6 flex flex-wrap gap-2">
-                <span className="rounded-lg bg-white/10 px-3 py-1.5 text-xs font-medium text-gray-200">
-                  {category}
-                </span>
-
-                <span className="rounded-lg bg-white/10 px-3 py-1.5 text-xs font-medium text-gray-200">
-                  {type}
-                </span>
-
-                <span className="rounded-lg bg-white/10 px-3 py-1.5 text-xs font-medium text-gray-200">
-                  {paymentMethod}
-                </span>
-              </div>
-
-              <div className="mt-6 border-t border-white/10 pt-5">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-400">
-                    My Share
-                  </span>
-
-                  <span className="font-semibold">
-                    ${myShare.toFixed(2)}
-                  </span>
-                </div>
-              </div>
+            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+              <h2 className="text-sm font-bold text-slate-900">Quick tips</h2>
+              <ul className="mt-4 space-y-3 text-xs leading-5 text-slate-600">
+                <li className="flex gap-2.5"><span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-amber-400" />Use clear descriptions to make expenses easy to find.</li>
+                <li className="flex gap-2.5"><span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-blue-500" />Choose a category to spot spending patterns.</li>
+                <li className="flex gap-2.5"><span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500" />Split shared purchases to track your portion.</li>
+                <li className="flex gap-2.5"><span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-violet-500" />Add a note when you want extra context later.</li>
+              </ul>
             </div>
 
-            {/* Quick Info */}
-            <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-              <h2 className="text-lg font-semibold text-gray-950">
-                Quick tips
-              </h2>
-
-              <div className="mt-5 space-y-4">
-                <div className="flex gap-3">
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gray-100 text-sm font-semibold text-gray-600">
-                    1
-                  </div>
-
-                  <div>
-                    <p className="text-sm font-semibold text-gray-900">
-                      Add expenses regularly
-                    </p>
-
-                    <p className="mt-1 text-xs leading-5 text-gray-500">
-                      Keeping transactions updated makes your dashboard more useful.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex gap-3">
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gray-100 text-sm font-semibold text-gray-600">
-                    2
-                  </div>
-
-                  <div>
-                    <p className="text-sm font-semibold text-gray-900">
-                      Use accurate categories
-                    </p>
-
-                    <p className="mt-1 text-xs leading-5 text-gray-500">
-                      Categories help you understand where most of your money goes.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex gap-3">
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gray-100 text-sm font-semibold text-gray-600">
-                    3
-                  </div>
-
-                  <div>
-                    <p className="text-sm font-semibold text-gray-900">
-                      Split shared expenses
-                    </p>
-
-                    <p className="mt-1 text-xs leading-5 text-gray-500">
-                      Your dashboard will use your share instead of the full amount.
-                    </p>
-                  </div>
-                </div>
+            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+              <div className="mb-4">
+                <h2 className="text-sm font-bold text-slate-900">Common expenses</h2>
+                <p className="mt-1 text-xs text-slate-500">Pick one to start a new entry.</p>
+              </div>
+              <div className="space-y-2">
+                {[
+                  { label: "Food", category: "Food", icon: "🍽️", tone: "bg-rose-50 text-rose-700" },
+                  { label: "Shopping", category: "Shopping", icon: "🛍️", tone: "bg-blue-50 text-blue-700" },
+                  { label: "Travel", category: "Travel", icon: "✈️", tone: "bg-amber-50 text-amber-700" },
+                  { label: "Utilities", category: "Rent & Bills", icon: "⌂", tone: "bg-indigo-50 text-indigo-700" },
+                  { label: "Entertainment", category: "Entertainment", icon: "▣", tone: "bg-violet-50 text-violet-700" },
+                ].map((item) => (
+                  <button
+                    key={item.label}
+                    type="button"
+                    onClick={() => {
+                      setCategory(item.category);
+                      setDescription(item.label);
+                      document.getElementById("expense-amount")?.focus();
+                    }}
+                    className="flex w-full items-center gap-3 rounded-xl border border-slate-100 px-3 py-2.5 text-left transition hover:border-blue-100 hover:bg-blue-50/50"
+                  >
+                    <span className={`flex h-8 w-8 items-center justify-center rounded-lg text-sm ${item.tone}`}>{item.icon}</span>
+                    <span className="flex-1 text-xs font-semibold text-slate-700">{item.label}</span>
+                    <span className="flex h-6 w-6 items-center justify-center rounded-full border border-slate-200 text-sm text-slate-500">+</span>
+                  </button>
+                ))}
               </div>
             </div>
           </div>

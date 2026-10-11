@@ -6,6 +6,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 
 export default function SignupPage() {
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -13,6 +14,13 @@ export default function SignupPage() {
 
   const handleSignup = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+
+    const trimmedName = name.trim();
+    if (!trimmedName) {
+      setMessage("Please enter your name.");
+      return;
+    }
+
     setLoading(true);
     setMessage("");
 
@@ -24,6 +32,9 @@ export default function SignupPage() {
         password,
         options: {
           emailRedirectTo: `${window.location.origin}/auth/callback`,
+          data: {
+            full_name: trimmedName,
+          },
         },
       });
 
@@ -59,6 +70,22 @@ export default function SignupPage() {
         </div>
 
         <form onSubmit={handleSignup} className="space-y-5">
+          <div>
+            <label htmlFor="name" className="mb-2 block text-sm font-medium text-gray-700">
+              Name
+            </label>
+            <input
+              id="name"
+              type="text"
+              autoComplete="name"
+              required
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-gray-900 focus:ring-2 focus:ring-gray-100"
+              placeholder="Your name"
+            />
+          </div>
+
           <div>
             <label htmlFor="email" className="mb-2 block text-sm font-medium text-gray-700">
               Email address
