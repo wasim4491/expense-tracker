@@ -16,31 +16,51 @@ async function getAuthenticatedUser() {
   return data.claims.sub;
 }
 
+
 async function callGoogleScript(payload: Record<string, unknown>) {
-  const response = await fetch(GOOGLE_SCRIPT_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      ...payload,
-      secret: EXPENSE_API_SECRET,
-    }),
-    cache: "no-store",
-  });
+  const start = Date.now();
 
-  const result = await response.text();
-
-  if (!response.ok || result.startsWith("ERROR:")) {
-    throw new Error(result || "Google Apps Script request failed");
-  }
+  console.log(`[Expense API] Google Script started: ${payload.action || "getExpenses"}`);
 
   try {
-    return JSON.parse(result);
-  } catch {
-    return result;
+    const response = await fetch(GOOGLE_SCRIPT_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        ...payload,
+        secret: EXPENSE_API_SECRET,
+      }),
+      cache: "no-store",
+    });
+
+    console.log(
+      `[Expense API] Google Script response headers: ${Date.now() - start} ms`
+    );
+
+    const result = await response.text();
+
+    console.log(
+      `[Expense API] Google Script response body: ${Date.now() - start} ms`
+    );
+
+    if (!response.ok || result.startsWith("ERROR:")) {
+      throw new Error(result || "Google Apps Script request failed");
+    }
+
+    try {
+      return JSON.parse(result);
+    } catch {
+      return result;
+    }
+  } finally {
+    console.log(
+      `[Expense API] Google Script total time: ${Date.now() - start} ms`
+    );
   }
 }
+
 
 
 export async function POST(request: Request) {
@@ -75,6 +95,7 @@ export async function POST(request: Request) {
   }
 }
 
+
 export async function GET(request: Request) {
   try {
     const userId = await getAuthenticatedUser();
@@ -90,7 +111,12 @@ export async function GET(request: Request) {
     const action = requestUrl.searchParams.get("action");
 
     const result = await callGoogleScript({
-      action: action === "getBudget" ? "getBudget" : "getExpenses",
+      action:
+        action === "getBudget"
+          ? "getBudget"
+          : action === "getDashboard"
+          ? "getDashboard"
+          : "getExpenses",
       userId,
     });
 
@@ -104,3 +130,4 @@ export async function GET(request: Request) {
     );
   }
 }
+

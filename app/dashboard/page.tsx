@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import LogoutButton from "@/app/components/LogoutButton";
+import Link from "next/link";
 
 type Expense = {
   ID: string;
@@ -35,50 +36,37 @@ export default function Dashboard() {
     ).padStart(2, "0")}`;
   });
 
+  
   useEffect(() => {
-    const fetchExpenses = async () => {
+    const fetchDashboard = async () => {
       try {
-        const response = await fetch("/api/expenses");
+        const response = await fetch(
+          "/api/expenses?action=getDashboard",
+          { cache: "no-store" }
+        );
 
         if (!response.ok) {
-          throw new Error("Failed to fetch expenses");
+          throw new Error("Failed to fetch dashboard data");
         }
 
         const data = await response.json();
-        setExpenses(data);
+
+        setExpenses(data.expenses);
+        if (typeof data.budget === "number" && data.budget >= 0) {
+          setMonthlyBudget(data.budget);
+          setBudgetInput(String(data.budget));
+        }
       } catch (error) {
-        console.error("Failed to fetch expenses:", error);
+        console.error("Failed to fetch dashboard:", error);
         setError("Unable to load dashboard. Please try again.");
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchExpenses();
-
-    const fetchBudget = async () => {
-      try {
-        const response = await fetch(
-          "/api/expenses?action=getBudget",
-          { cache: "no-store" }
-        );
-    
-        if (!response.ok) {
-          throw new Error("Failed to fetch budget");
-        }
-    
-        const data = await response.json();
-    
-        if (typeof data.budget === "number" && data.budget >= 0) {
-          setMonthlyBudget(data.budget);
-        }
-      } catch (error) {
-        console.error("Failed to fetch budget:", error);
-      }
-    };
-    
-    fetchBudget();
+    fetchDashboard();
   }, []);
+
 
 
   const handleSaveBudget = async () => {
@@ -222,19 +210,62 @@ export default function Dashboard() {
     1
   );
 
+  
   if (isLoading) {
     return (
-      <main className="min-h-screen bg-[#f7f8fa] p-6">
-        <div className="mx-auto max-w-6xl">
-          <div className="flex h-64 items-center justify-center">
-            <p className="text-sm text-gray-500">
-              Loading dashboard...
-            </p>
+      <main className="min-h-screen bg-[#f7f8fa] px-4 py-6 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-6xl animate-pulse">
+          {/* Header skeleton */}
+          <div className="mb-10 flex items-center justify-between">
+            <div className="h-7 w-40 rounded-lg bg-gray-200" />
+            <div className="h-9 w-32 rounded-xl bg-gray-200" />
+          </div>
+
+          <div className="mb-8 space-y-3">
+            <div className="h-4 w-36 rounded bg-gray-200" />
+            <div className="h-10 w-56 rounded-lg bg-gray-200" />
+            <div className="h-4 w-64 rounded bg-gray-200" />
+          </div>
+
+          {/* Summary card skeletons */}
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {[1, 2, 3, 4].map((item) => (
+              <div
+                key={item}
+                className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm"
+              >
+                <div className="mb-5 h-4 w-24 rounded bg-gray-200" />
+                <div className="mb-4 h-9 w-32 rounded bg-gray-200" />
+                <div className="h-3 w-40 rounded bg-gray-100" />
+              </div>
+            ))}
+          </div>
+
+          {/* Budget skeleton */}
+          <div className="mt-6 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+            <div className="mb-5 h-4 w-32 rounded bg-gray-200" />
+            <div className="mb-6 h-9 w-40 rounded bg-gray-200" />
+            <div className="h-3 w-full rounded-full bg-gray-100" />
+          </div>
+
+          {/* Analytics skeletons */}
+          <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
+            {[1, 2, 3, 4].map((item) => (
+              <div
+                key={item}
+                className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm"
+              >
+                <div className="mb-6 h-5 w-44 rounded bg-gray-200" />
+                <div className="mb-4 h-4 w-60 rounded bg-gray-100" />
+                <div className="h-32 rounded-xl bg-gray-100" />
+              </div>
+            ))}
           </div>
         </div>
       </main>
     );
   }
+
   
   if (error) {
     return (
@@ -272,34 +303,34 @@ export default function Dashboard() {
 
         {/* Navigation */}
         <nav className="mb-10 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <a
+          <Link
             href="/"
             className="text-xl font-bold tracking-tight text-gray-950"
           >
             Expense Tracker
-          </a>
+          </Link>
 
           <div className="flex flex-wrap gap-2">
-            <a
+            <Link
               href="/"
               className="rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
             >
               Add Expense
-            </a>
+            </Link>
 
-            <a
+            <Link
               href="/expenses"
               className="rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
             >
               Expenses
-            </a>
+            </Link>
 
-            <a
+            <Link
               href="/dashboard"
               className="rounded-xl bg-gray-950 px-4 py-2 text-sm font-medium text-white"
             >
               Dashboard
-            </a>
+            </Link>
             <LogoutButton />
           </div>
         </nav>
