@@ -342,7 +342,7 @@ export default function Dashboard() {
                 </option>
               ))}
             </select>
-            <a href="/" className="hidden whitespace-nowrap rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-700 sm:inline-flex">+ Add Expense</a>
+            <a href="/add-expense" className="hidden whitespace-nowrap rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-700 sm:inline-flex">+ Add Expense</a>
           </div>
         </div>
 

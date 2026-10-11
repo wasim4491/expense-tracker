@@ -318,7 +318,7 @@ export default function ExpensesPage() {
           </div>
 
           <a
-            href="/"
+            href="/add-expense"
             className="inline-flex w-fit items-center rounded-xl bg-gray-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-gray-800"
           >
             + Add Expense
@@ -474,7 +474,7 @@ export default function ExpensesPage() {
               </p>
 
               <a
-                href="/"
+                href="/add-expense"
                 className="mt-5 rounded-xl bg-gray-950 px-5 py-3 text-sm font-semibold text-white hover:bg-gray-800"
               >
                 Add Expense
@@ -670,7 +670,7 @@ export default function ExpensesPage() {
             </div>
 
             <a
-              href="/"
+              href="/add-expense"
               className="w-fit rounded-xl bg-gray-950 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-gray-800"
             >
               + Add Expense

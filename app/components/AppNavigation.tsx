@@ -11,7 +11,7 @@ type NavIconName = "dashboard" | "add" | "expenses" | "calendar" | "settings" | 
 
 const primaryLinks: { href: string; label: string; icon: NavIconName }[] = [
   { href: "/dashboard", label: "Dashboard", icon: "dashboard" },
-  { href: "/", label: "Add Expense", icon: "add" },
+  { href: "/add-expense", label: "Add Expense", icon: "add" },
   { href: "/expenses", label: "All Expenses", icon: "expenses" },
   { href: "/calendar", label: "Calendar", icon: "calendar" },
 ];
@@ -98,7 +98,7 @@ export default function AppNavigation() {
   return (
     <>
       <aside className="fixed inset-y-0 left-0 z-40 hidden w-56 flex-col border-r border-slate-200 bg-white px-3 py-5 lg:flex">
-        <Link href="/dashboard" className="mb-8 flex items-center gap-2.5 px-2">
+        <Link href="/" className="mb-8 flex items-center gap-2.5 px-2">
           <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-800 text-white shadow-sm">
             <svg viewBox="0 0 24 24" fill="none" className="h-[18px] w-[18px]" aria-hidden="true">
               <path d="M4 7.5A2.5 2.5 0 0 1 6.5 5H19a2 2 0 0 1 2 2v12H6.5A2.5 2.5 0 0 1 4 16.5v-9Z" stroke="currentColor" strokeWidth="1.6" />
@@ -129,7 +129,7 @@ export default function AppNavigation() {
       <header className="fixed inset-x-0 top-0 z-30 h-[68px] border-b border-slate-200 bg-white/95 px-4 backdrop-blur sm:px-6 lg:left-56">
         <div className="mx-auto flex h-full max-w-[1440px] items-center justify-between gap-4">
           <div className="flex min-w-0 items-center gap-3">
-            <Link href="/dashboard" className="flex shrink-0 items-center gap-2 lg:hidden">
+            <Link href="/" className="flex shrink-0 items-center gap-2 lg:hidden">
               <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-800 text-sm font-bold text-white">$</span>
               <span className="text-sm font-bold text-slate-900">ExpenseTracker</span>
             </Link>

@@ -57,9 +57,49 @@ body {
   animation: expense-success-check 420ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 
+@keyframes microphone-pulse {
+  50% {
+    box-shadow: 0 0 0 5px rgb(15 23 42 / 10%);
+  }
+}
+
+.mic-listening {
+  animation: microphone-pulse 1s ease-in-out infinite;
+}
+
+@keyframes loading-dot-bounce {
+  0%, 80%, 100% {
+    opacity: 0.4;
+    transform: translateY(0);
+  }
+  40% {
+    opacity: 1;
+    transform: translateY(-3px);
+  }
+}
+
+.loading-dot {
+  display: block;
+  width: 5px;
+  height: 5px;
+  border-radius: 9999px;
+  background: currentColor;
+  animation: loading-dot-bounce 1s ease-in-out infinite;
+}
+
+.loading-dot-delay-1 {
+  animation-delay: 120ms;
+}
+
+.loading-dot-delay-2 {
+  animation-delay: 240ms;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .expense-success-card,
-  .expense-success-check {
+  .expense-success-check,
+  .mic-listening,
+  .loading-dot {
     animation: none;
   }
 }
