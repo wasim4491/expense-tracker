@@ -42,12 +42,16 @@ async function callGoogleScript(payload: Record<string, unknown>) {
   }
 }
 
+
 export async function POST(request: Request) {
   try {
     const userId = await getAuthenticatedUser();
 
     if (!userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
     }
 
     const body = await request.json();
@@ -76,7 +80,10 @@ export async function GET(request: Request) {
     const userId = await getAuthenticatedUser();
 
     if (!userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
     }
 
     const requestUrl = new URL(request.url);
