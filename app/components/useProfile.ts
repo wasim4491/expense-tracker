@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/client";
 export function useProfile() {
   const [displayName, setDisplayName] = useState("Account");
   const [email, setEmail] = useState("");
+  const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
     const supabase = createClient();
@@ -15,6 +16,7 @@ export function useProfile() {
       if (!user) {
         setDisplayName("Account");
         setEmail("");
+        setUserId(null);
         return;
       }
 
@@ -25,6 +27,7 @@ export function useProfile() {
           : user.email?.split("@")[0] || "Account"
       );
       setEmail(user.email || "");
+      setUserId(user.id);
     };
 
     const loadProfile = async () => {
@@ -41,5 +44,5 @@ export function useProfile() {
     return () => authListener.subscription.unsubscribe();
   }, []);
 
-  return { displayName, email };
+  return { displayName, email, userId };
 }

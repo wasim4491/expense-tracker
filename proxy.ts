@@ -9,7 +9,8 @@ export async function proxy(request: NextRequest) {
   const isProtectedRoute =
     pathname.startsWith("/dashboard") ||
     pathname.startsWith("/expenses") ||
-    pathname.startsWith("/add-expense");
+    pathname.startsWith("/add-expense") ||
+    pathname.startsWith("/money-tracker");
 
   const isAuthRoute =
     pathname.startsWith("/login") ||
