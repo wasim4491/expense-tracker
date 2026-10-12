@@ -56,7 +56,7 @@ async function getBudget(supabase: any, userId: string) {
   return Number(data?.monthly_budget ?? 2500);
 }
 
-function buildExpenseInput(body: any) {
+function buildExpenseInput(body: any, includePaymentMethod = true) {
   const date = String(body.date ?? "").substring(0, 10);
   const amount = Number(body.amount);
 
@@ -91,7 +91,9 @@ function buildExpenseInput(body: any) {
     description: String(body.description ?? ""),
     category: String(body.category || "Other"),
     type: String(body.type || "Need"),
-    payment_method: String(body.paymentMethod ?? ""),
+    ...(includePaymentMethod
+      ? { payment_method: String(body.paymentMethod ?? "") }
+      : {}),
     notes: String(body.notes ?? ""),
     split: String(body.split || "No"),
     people,
@@ -217,7 +219,11 @@ export async function POST(request: Request) {
         );
       }
 
-      const expense = buildExpenseInput(body);
+      // Older records keep their stored payment method when the UI omits it.
+      const expense = buildExpenseInput(
+        body,
+        Object.prototype.hasOwnProperty.call(body, "paymentMethod")
+      );
 
       const { data, error } = await supabase
         .from("expenses")

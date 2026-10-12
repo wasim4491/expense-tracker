@@ -10,7 +10,6 @@ type Expense = {
   Description: string;
   Category: string;
   Type: string;
-  "Payment Method": string;
   Notes: string;
   Split: string;
   People: number;
@@ -73,7 +72,7 @@ export default function ExpensesPage() {
 
         const data = await response.json();
 
-        setExpenses(data.reverse());
+        setExpenses(data);
       } catch (error) {
         console.error("Failed to fetch expenses:", error);
         setError("Unable to load expenses. Please try again.");
@@ -167,7 +166,6 @@ export default function ExpensesPage() {
           description: editDescription.trim(),
           category: editingExpense.Category,
           type: editingExpense.Type,
-          paymentMethod: editingExpense["Payment Method"],
           notes: editingExpense.Notes,
           split: editingExpense.Split,
           people: editingExpense.People,
@@ -223,7 +221,6 @@ export default function ExpensesPage() {
       expense.Description?.toLowerCase().includes(searchText) ||
       expense.Category?.toLowerCase().includes(searchText) ||
       expense.Type?.toLowerCase().includes(searchText) ||
-      expense["Payment Method"]?.toLowerCase().includes(searchText) ||
       expense.Notes?.toLowerCase().includes(searchText);
 
     const matchesCategory =
@@ -508,7 +505,7 @@ export default function ExpensesPage() {
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[900px] text-left">
+              <table className="w-full min-w-[800px] text-left">
                 <thead>
                   <tr className="border-b border-gray-100 bg-gray-50/70">
                     <th className="px-5 py-4 text-xs font-semibold uppercase tracking-wide text-gray-400">
@@ -525,10 +522,6 @@ export default function ExpensesPage() {
 
                     <th className="px-5 py-4 text-xs font-semibold uppercase tracking-wide text-gray-400">
                       Type
-                    </th>
-
-                    <th className="px-5 py-4 text-xs font-semibold uppercase tracking-wide text-gray-400">
-                      Payment
                     </th>
 
                     <th className="px-5 py-4 text-right text-xs font-semibold uppercase tracking-wide text-gray-400">
@@ -599,11 +592,6 @@ export default function ExpensesPage() {
                         >
                           {expense.Type}
                         </span>
-                      </td>
-
-                      {/* Payment */}
-                      <td className="px-5 py-5 text-sm text-gray-500">
-                        {expense["Payment Method"]}
                       </td>
 
                       {/* Amount */}
@@ -749,12 +737,6 @@ export default function ExpensesPage() {
                     </span>
                 </div>
 
-                <div className="mt-2 flex justify-between">
-                    <span>Payment</span>
-                    <span className="font-medium text-gray-900">
-                    {editingExpense["Payment Method"]}
-                    </span>
-                </div>
                 </div>
             </div>
 

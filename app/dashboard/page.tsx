@@ -12,7 +12,6 @@ type Expense = {
   Description: string;
   Category: string;
   Type: string;
-  "Payment Method": string;
   Notes: string;
   Split: string;
   People: number;
@@ -398,8 +397,8 @@ export default function Dashboard() {
             </div>
           ) : (
             <>
-              <div className="hidden grid-cols-[110px_minmax(160px,1fr)_130px_140px_110px_110px] gap-3 bg-slate-50/70 px-6 py-3 text-[10px] font-bold uppercase tracking-wider text-slate-400 sm:grid">
-                <span>Date</span><span>Description</span><span>Category</span><span>Payment method</span><span className="text-right">Amount</span><span className="text-right">My share</span>
+              <div className="hidden grid-cols-[110px_minmax(160px,1fr)_130px_110px_110px] gap-3 bg-slate-50/70 px-6 py-3 text-[10px] font-bold uppercase tracking-wider text-slate-400 sm:grid">
+                <span>Date</span><span>Description</span><span>Category</span><span className="text-right">Amount</span><span className="text-right">My share</span>
               </div>
               <div className="divide-y divide-slate-100">
                 {recentExpenses.map((expense) => {
@@ -407,12 +406,12 @@ export default function Dashboard() {
                   const share = getExpenseShare(expense);
                   const isSplit = Math.abs(amount - share) > 0.009;
                   return (
-                    <article key={expense.ID} className="px-5 py-3.5 transition-colors hover:bg-slate-50/70 sm:grid sm:grid-cols-[110px_minmax(160px,1fr)_130px_140px_110px_110px] sm:items-center sm:gap-3 sm:px-6">
+                    <article key={expense.ID} className="px-5 py-3.5 transition-colors hover:bg-slate-50/70 sm:grid sm:grid-cols-[110px_minmax(160px,1fr)_130px_110px_110px] sm:items-center sm:gap-3 sm:px-6">
                       <span className="hidden text-xs text-slate-500 sm:block">{formatDate(expense.Date)}</span>
                       <div className="flex min-w-0 items-center justify-between gap-4 sm:block">
                         <div className="min-w-0">
                           <p className="truncate text-sm font-semibold text-slate-800">{expense.Description?.trim() || "Untitled expense"}</p>
-                          <p className="mt-1 truncate text-xs text-slate-500 sm:hidden">{formatDate(expense.Date)} · {expense.Category || "Other"} · {expense["Payment Method"] || "No payment method"}</p>
+                          <p className="mt-1 truncate text-xs text-slate-500 sm:hidden">{formatDate(expense.Date)} · {expense.Category || "Other"}</p>
                         </div>
                         <div className="shrink-0 text-right sm:hidden">
                           <p className="text-sm font-semibold text-slate-900">{formatMoney(amount)}</p>
@@ -420,7 +419,6 @@ export default function Dashboard() {
                         </div>
                       </div>
                       <span className="hidden truncate text-xs text-slate-600 sm:block">{expense.Category || "Other"}</span>
-                      <span className="hidden truncate text-xs text-slate-600 sm:block">{expense["Payment Method"] || "—"}</span>
                       <span className="hidden text-right text-sm font-semibold text-slate-900 sm:block">{formatMoney(amount)}</span>
                       <span className="hidden text-right text-sm text-slate-600 sm:block">{isSplit ? formatMoney(share) : <span className="text-slate-300">—</span>}</span>
                     </article>

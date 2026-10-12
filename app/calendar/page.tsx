@@ -10,7 +10,6 @@ type Expense = {
   Description: string;
   Category: string;
   Type: string;
-  "Payment Method": string;
   "My Share": number;
 };
 
@@ -159,7 +158,7 @@ export default function CalendarPage() {
                   <div key={expense.ID} className="flex items-center justify-between gap-4 py-3">
                     <div className="min-w-0">
                       <p className="truncate text-sm font-semibold text-slate-800">{expense.Description}</p>
-                      <p className="mt-0.5 text-xs text-slate-500">{expense.Category} · {expense["Payment Method"]}</p>
+                      <p className="mt-0.5 text-xs text-slate-500">{expense.Category}</p>
                     </div>
                     <p className="shrink-0 text-sm font-semibold text-slate-950">{formatMoney(Number(expense["My Share"] || expense.Amount || 0))}</p>
                   </div>

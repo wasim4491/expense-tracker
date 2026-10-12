@@ -5,7 +5,6 @@ import AppNavigation from "@/app/components/AppNavigation";
 import {
   expenseCategories,
   expenseTypes,
-  paymentMethods,
 } from "@/lib/ai/expense-suggestion";
 
 export default function Home() {
@@ -21,7 +20,6 @@ export default function Home() {
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState("Food");
   const [type, setType] = useState("Need");
-  const [paymentMethod, setPaymentMethod] = useState("Credit Card");
   const [notes, setNotes] = useState("");
 
   const [split, setSplit] = useState("No");
@@ -90,7 +88,6 @@ export default function Home() {
           description,
           category,
           type,
-          paymentMethod,
           notes,
           split,
           people: split === "Yes" ? Number(people) : 1,
@@ -118,7 +115,6 @@ export default function Home() {
       setDescription("");
       setCategory("Food");
       setType("Need");
-      setPaymentMethod("Credit Card");
       setNotes("");
       setSplit("No");
       setPeople("2");
@@ -271,8 +267,8 @@ export default function Home() {
                 />
               </div>
 
-              {/* Category / Type / Payment */}
-              <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
+              {/* Category / Type */}
+              <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
 
                 {/* Category */}
                 <div>
@@ -312,26 +308,6 @@ export default function Home() {
                   </select>
                 </div>
 
-                {/* Payment */}
-                <div>
-                  <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-gray-400">
-                    Payment
-                  </label>
-
-                  <select
-                    value={paymentMethod}
-                    onChange={(e) =>
-                      setPaymentMethod(e.target.value)
-                    }
-                    className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 outline-none transition focus:border-gray-400 focus:bg-white"
-                  >
-                    {paymentMethods.map((paymentOption) => (
-                      <option key={paymentOption} value={paymentOption}>
-                        {paymentOption}
-                      </option>
-                    ))}
-                  </select>
-                </div>
               </div>
 
               {/* Split Section */}
@@ -558,8 +534,7 @@ export default function Home() {
                               day: "numeric",
                               year: "numeric",
                             }
-                          )}{" "}
-                          · {expense["Payment Method"]}
+                          )}
                         </p>
                       </div>
 
